@@ -193,7 +193,7 @@ class MailManager:
             return False
 
     def is_forwarding_exist(self, user_id, destination):
-        if self.database.select(f"SELECT {FORWARDINGS_TABLE}.id FROM {FORWARDINGS_TABLE} JOIN {USERS_TABLE} WHERE {FORWARDINGS_TABLE}.destination = '{destination}' AND {FORWARDINGS_TABLE}.id = '{user_id}'", True):
+        if self.database.select(f"SELECT {FORWARDINGS_TABLE}.id FROM {FORWARDINGS_TABLE} WHERE {FORWARDINGS_TABLE}.destination = '{destination}' AND {FORWARDINGS_TABLE}.user_id = '{user_id}'", True):
             return True
         else:
             return False
