@@ -18,7 +18,7 @@ DEFAULTS = {
     'DB_HOST': '<DB_HOST>',
     'DB_USER': '<DB_USER>',
     'DB_PORT': 3306,
-    'DB_NAME': '<DB_NAME>>',
+    'DB_NAME': '<DB_NAME>',
     'DB_PASSWORD_FILE': os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.my.cnf')),
     'TABLE_CHOICES': [DOMAINS_TABLE, USERS_TABLE, FORWARDINGS_TABLE],
     'MAX_ROWS': 40,
@@ -207,7 +207,7 @@ class Database:
         if password:
             config['password'] = password
         elif password_file:
-            config['read_default_file'] = password_file
+            config['option_files'] = password_file
         self.connection = mysql.connector.connect(**config)
         self.cursor = self.connection.cursor()
 
