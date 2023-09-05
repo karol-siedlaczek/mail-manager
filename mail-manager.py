@@ -19,7 +19,7 @@ DEFAULTS = {
     'DB_USER': '<DB_USER>',
     'DB_PORT': 3306,
     'DB_NAME': '<DB_NAME>',
-    'DB_PASSWORD_FILE': os.path.join(os.path.expanduser("~"), '.mail-manager.my.cnf'),
+    'DB_PASSWORD_FILE': os.path.join(os.path.expanduser("~"), '.mail-manager/.my.cnf'),
     'TABLE_CHOICES': [DOMAINS_TABLE, USERS_TABLE, FORWARDINGS_TABLE],
     'MAX_ROWS': 40,
     'LOG_FILE': os.path.abspath(os.path.join(os.sep, 'var', 'log', f'{os.path.basename(__file__).split(".")[0]}.log'))
