@@ -48,7 +48,7 @@ class MailManager:
             user_domain_id = self.database.select(f"SELECT {DOMAINS_TABLE}.id FROM {DOMAINS_TABLE} WHERE {DOMAINS_TABLE}.name = '{email_address.split('@')[-1]}'", True)
             if not user_domain_id:
                 user_domain_id = self.create(DOMAINS_TABLE, email_address.split('@')[-1])
-                log.info(f'domain of "{email_address}" alias not exist, domain "{email_address.split("@")[-1]}" added with "{user_domain_id}" index')
+                log.info(f'Domain of "{email_address}" alias not exist, domain "{email_address.split("@")[-1]}" added with "{user_domain_id}" index')
             query = f"INSERT INTO {table_name} (name, domain_id, password) VALUES ('{user_name}', '{user_domain_id}', MD5('{user_password}'))"
         elif table_name == FORWARDINGS_TABLE:
             user_input = input(f'Type a user email or id for new record in "{table_name}" table: \n')
@@ -64,26 +64,28 @@ class MailManager:
                 if not forwarding_user_id:  # user does not exist
                     print(f'User with "{user_input}" email address does not exist, type password to create user')
                     forwarding_user_id = self.create(USERS_TABLE, None, user_input)
-                    log.info(f'email address "{user_input}" does not exist, user "{user_input.split("@")[-1]}" added with "{forwarding_user_id}" index')
+                    log.info(f'Email address "{user_input}" does not exist, user "{user_input.split("@")[-1]}" added with "{forwarding_user_id}" index')
             forwarding_destination = input(f'Type a destination email address where the emails should be forwarded (<name>@<domain>):\n')
             while not MailManager.is_valid_email(forwarding_destination):
                 forwarding_destination = input(f'Email address is not valid email, type value again (<name>@<domain>):\n')
             if self.is_forwarding_exist(forwarding_user_id, forwarding_destination):
-                raise IndexError(f'forwarding from user with "{forwarding_user_id}" id to "{forwarding_destination}" email address already exist, adding aborted')
+                raise IndexError(f'Forwarding from user with "{forwarding_user_id}" id to "{forwarding_destination}" email address already exist, adding aborted')
             else:
                 query = f"INSERT INTO {table_name} (user_id, destination) VALUES('{forwarding_user_id}', '{forwarding_destination}')"
         new_row_id = self.database.insert(query)
-        print(f'new row with id "{new_row_id}" added to "{table_name}" table')
+        print(f'New row with id "{new_row_id}" added to "{table_name}" table')
         return new_row_id
 
     def delete(self, table_name, index):
         row, row_name = self.get_row(table_name, index)
-        confirmation = input(f'Are you sure you want to delete "{row}" {row_name} in {table_name} table? (yes/no): ')
+        confirmation = input(f'Are you sure you want to delete "{row}" {row_name} from {table_name} table? (yes/no): ')
         if confirmation.lower() == 'yes':
             deleted_row = self.database.select(f"SELECT * FROM {table_name} WHERE id = {index}")[0]
             self.database.delete(f"DELETE FROM {table_name} WHERE id = {index}")
-            print(f'row with id "{index}" deleted from "{table_name}" table')
+            print(f'Row with id "{index}" deleted from "{table_name}" table')
             log.info(f'row with id "{index}" with values {deleted_row} deleted from "{table_name}"')
+        else:
+            print(f'Action aborted')
 
     def update(self, table_name, index):
         password_column = False
@@ -99,11 +101,11 @@ class MailManager:
         else:
             new_value = input(f'Type new value for {row} {row_name} in {column} column (current: "{old_value}"):\n')
         if new_value == old_value:
-            raise IndexError(f'new value ({new_value if not password_column else "****"}) is equal with old value ({old_value if not password_column else "****"}) in "{column}" column for row with "{index}" index in "{table_name}" table, updating aborted')
+            raise IndexError(f'New value ({new_value if not password_column else "****"}) is equal with old value ({old_value if not password_column else "****"}) in "{column}" column for row with "{index}" index in "{table_name}" table, updating aborted')
         new_value = f"'{new_value}'" if not password_column else f"MD5('{new_value}')"
         self.database.update(f"UPDATE {table_name} SET {column} = {new_value} WHERE id = {index}", True if password_column else False)
-        print(f'value of "{column}" column in "{table_name}" table for row with id "{index}" updated from "{old_value if not password_column else "****"}" to "{new_value if not password_column else "****"}"')
-        log.info(f'value of "{column}" column in "{table_name}" table for row with id "{index}" updated from "{old_value if not password_column else "****"}" to "{new_value if not password_column else "****"}"')
+        print(f'Value of "{column}" column in "{table_name}" table for row with id "{index}" updated from "{old_value if not password_column else "****"}" to "{new_value if not password_column else "****"}"')
+        log.info(f'Value of "{column}" column in "{table_name}" table for row with id "{index}" updated from "{old_value if not password_column else "****"}" to "{new_value if not password_column else "****"}"')
 
     def get_list(self, table_name, inactive, active, max_rows, filter_value):
         query = None
@@ -171,7 +173,7 @@ class MailManager:
     @staticmethod
     def get_result(title, result, headers):
         if len(result) == 0:
-            raise LookupError(f'no results for query')
+            raise LookupError(f'No results for query')
         return f'{title}\n{tabulate(result, headers=headers)}\n'
 
     @staticmethod
@@ -214,9 +216,9 @@ class Database:
     def __run_query(self, query, sensitive_query=False):
         self.cursor.execute(query)
         if sensitive_query:
-            log.debug('query not logged, because command contains sensitive content')
+            log.debug('Query not logged, because command contains sensitive content')
         else:
-            log.debug(f'execute {query}')
+            log.debug(f'Execute {query}')
 
     def insert(self, query):
         self.__run_query(query)
