@@ -2,6 +2,7 @@
 
 import os
 import re
+import yaml
 from getpass import getpass
 import argparse
 import logging as log
@@ -9,24 +10,14 @@ import mysql.connector
 from tabulate import tabulate
 from mysql.connector.errors import InterfaceError, DatabaseError
 
+CONFIG_FILE = '/etc/mail-manager/mail-manager.yaml'
+
 DOMAINS_TABLE = 'domains'
 USERS_TABLE = 'users'
 FORWARDINGS_TABLE = 'forwardings'
 AUDIT_LOGS_TABLE = 'audit_logs'
 
-DEFAULTS = { 
-    'DB_HOST': '<DB_HOST>',
-    'DB_USER': '<DB_USER>',
-    'DB_PORT': 3306,
-    'DB_NAME': '<DB_NAME>',
-    'DB_PASSWORD_FILE': os.path.join(os.path.expanduser("~"), '.mail-manager/.my.cnf'),
-    'TABLE_CHOICES': [DOMAINS_TABLE, USERS_TABLE, FORWARDINGS_TABLE],
-    'MAX_ROWS': 40,
-    'LOG_FILE': os.path.abspath(os.path.join(os.sep, 'var', 'log', f'{os.path.basename(__file__).split(".")[0]}.log'))
-}
-
-log.basicConfig(filename=DEFAULTS['LOG_FILE'], format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=log.DEBUG)
-
+TABLE_CHOICES = [DOMAINS_TABLE, USERS_TABLE, FORWARDINGS_TABLE, AUDIT_LOGS_TABLE]
 
 class MailManager:
     def __init__(self, database):
@@ -249,41 +240,42 @@ class Database:
 
 
 def parse_args():
+    db_conf = conf.get('db')
     parser = argparse.ArgumentParser(description='Script to manage domains, users and forwardings of postfix mail server based on SASL smtp auth')
     parser.add_argument('-H', '--dbHost',
-                        help=f'Database host, default is {DEFAULTS["DB_HOST"]}',
+                        help=f'Database host, default is {db_conf.get("host")}',
                         type=str,
                         metavar='host',
-                        default=DEFAULTS['DB_HOST'])
+                        default=db_conf.get("host"))
     parser.add_argument('-U', '--dbUser',
-                        help=f'Database user, default is {DEFAULTS["DB_USER"]}',
+                        help=f'Database user, default is {db_conf.get("user")}',
                         type=str,
                         metavar='user',
-                        default=DEFAULTS['DB_USER'])
+                        default=db_conf.get("user"))
     parser.add_argument('-p', '--dbPort',
-                        help=f'Database port, default is {DEFAULTS["DB_PORT"]}',
+                        help=f'Database port, default is {db_conf.get("port")}',
                         type=int,
                         metavar='port',
-                        default=DEFAULTS['DB_PORT'])
+                        default=db_conf.get("port"))
     parser.add_argument('-D', '--dbName',
-                        help=f'Database name, default is {DEFAULTS["DB_NAME"]}',
+                        help=f'Database name, default is {db_conf.get("name")}',
                         type=str,
                         metavar='database',
-                        default=DEFAULTS['DB_NAME'])
+                        default=db_conf.get("name"))
     parser.add_argument('-P', '--dbPasswd',
                         help='Database password, choose this option if you do not want get password from file',
                         type=str,
                         metavar='password')
     parser.add_argument('--dbPasswdFile',
-                        help=f'File with password to database, default is {DEFAULTS["DB_PASSWORD_FILE"]}',
+                        help=f'File with password to database, default is {db_conf.get("pass_file")}',
                         type=str,
                         metavar='file',
-                        default=DEFAULTS["DB_PASSWORD_FILE"])
+                        default=db_conf.get("pass_file"))
     parser.add_argument('-l', '--list',
                         help=f'List users, forwarding or domains table content',
                         type=str,
                         nargs='+',
-                        choices=DEFAULTS['TABLE_CHOICES'])
+                        choices=TABLE_CHOICES)
     parser.add_argument('-f', '--filter',
                         help=f'Usable with -l/--list argument to filter output by domain or --logs argument to filter output by user',
                         type=str)
@@ -291,9 +283,9 @@ def parse_args():
                         help='Lists SASL authentication logs from database',
                         action='store_true')
     parser.add_argument('-m', '--maxRows',
-                        help=f'Specifies number of log lines which will be printed, default is {DEFAULTS["MAX_ROWS"]}',
+                        help=f'Specifies number of log lines which will be printed, default is {conf.get("max_rows")}',
                         type=int,
-                        default=DEFAULTS['MAX_ROWS'])
+                        default=conf.get("max_rows"))
     parser.add_argument('--inactive',
                         help=f'Usable with -l/--list argument in order to get only inactive users in output',
                         action='store_true',
@@ -305,15 +297,15 @@ def parse_args():
     parser.add_argument('-a', '--add',
                         help='Select table in which a row is to be added',
                         type=str,
-                        choices=DEFAULTS['TABLE_CHOICES'])
+                        choices=TABLE_CHOICES)
     parser.add_argument('-u', '--update',
                         help='elect table in which a row is to be updated',
                         type=str,
-                        choices=DEFAULTS['TABLE_CHOICES'])
+                        choices=TABLE_CHOICES)
     parser.add_argument('-d', '--delete',
                         help='Select table in which a row is to be deleted',
                         type=str,
-                        choices=DEFAULTS['TABLE_CHOICES'])
+                        choices=TABLE_CHOICES)
     parser.add_argument('-i', '--index',
                         help=f'Usable with -u/--update or -d/--delete argument to specify index of database',
                         type=int)
@@ -324,13 +316,16 @@ def parse_args():
         raise parser.error('only one argument can be used at once from the -a/--add, -u/--update or -d/--delete arguments')
     elif not args.list and not args.logs and args.filter:  # when filtering, but listing column not selected
         raise parser.error('invalid usage of -f/--filter argument, the -l/--list or --logs argument is required to filter')
-    elif not args.list and not args.logs and args.maxRows != DEFAULTS['MAX_ROWS']:
+    elif not args.list and not args.logs and int(args.maxRows) != int(conf.get('max_rows')):
         raise parser.error('invalid usage of -m/--maxRows argument, the -l/--list or --logs argument is required to specify number of rows in output')
     return args
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    with open(CONFIG_FILE, "r") as f:
+        conf = yaml.safe_load(f)
+    log.basicConfig(filename=conf.get('log_file'), format='%(asctime)s %(name)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=log.DEBUG)
+    args = parse_args(conf)
     try:
         mailManager = MailManager(Database(args.dbHost, args.dbUser, args.dbPort, args.dbName, args.dbPasswd, args.dbPasswdFile))
         if args.add:
