@@ -17,7 +17,7 @@ USERS_TABLE = 'users'
 FORWARDINGS_TABLE = 'forwardings'
 AUDIT_LOGS_TABLE = 'audit_logs'
 
-TABLE_CHOICES = [DOMAINS_TABLE, USERS_TABLE, FORWARDINGS_TABLE, AUDIT_LOGS_TABLE]
+TABLE_CHOICES = [DOMAINS_TABLE, USERS_TABLE, FORWARDINGS_TABLE]
 
 class MailManager:
     def __init__(self, database):
@@ -239,7 +239,7 @@ class Database:
         return [column[0] for column in columns]
 
 
-def parse_args():
+def parse_args(conf):
     db_conf = conf.get('db')
     parser = argparse.ArgumentParser(description='Script to manage domains, users and forwardings of postfix mail server based on SASL smtp auth')
     parser.add_argument('-H', '--dbHost',
