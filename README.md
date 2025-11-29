@@ -27,11 +27,7 @@ sql_user:               <DB_USER>
 sql_passwd:             <DB_PASSWORD>
 sql_hostnames:          <DB_HOST>:<DB_PORT>
 sql_database:           <DB_NAME>
-#sql_select:            SELECT password FROM users JOIN domains ON users.domain_id = domains.id WHERE users.name='%u' AND domains.domain = '%r'
-#sql_select:            SELECT u.password FROM users u JOIN domains d ON d.id = u.domain_id WHERE u.name = '%u' AND d.name = '%r' AND active = true
 sql_select:             SELECT password FROM users WHERE email = '%s'
-#sql_insert:            INSERT INTO users (name, domain_id, '%p') VALUES ('%u', '%r', '%v')
-#sql_update:            UPDATE users SET '%p' = '%v' WHERE users.name = '%u'
 log_level:              7
 ```
 
