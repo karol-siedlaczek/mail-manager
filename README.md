@@ -1,3 +1,3 @@
-# mail-manager
+# Postfix database mail manager
 
-Scripts allows manage users, domains and forwardings of virtual accounts in postfix
+Add/list/delete users, domains, forwardings or virtual accounts in Postfix
